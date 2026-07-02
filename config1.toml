@@ -1,0 +1,14 @@
+[pubmed]
+term = "Brevundimonas diminuta case reports[pt] AND free full text[Filter]"
+email = "joheli@gmx.net"
+retmax = 50
+batch_size = 25
+
+[database]
+sqlite_path = "mudpeter.db"
+
+[fulltext]
+enabled = true
+prefer_pmc = true
+use_pdf = true
+max_chars = 500000

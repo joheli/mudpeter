@@ -1,0 +1,26 @@
+[project]
+name = "mudpeter"
+version = "0.0.1"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "biopython>=1.87",
+    "pydantic>=2.13.4",
+    "pymupdf>=1.28.0",
+    "requests>=2.34.2",
+    "sqlmodel>=0.0.39",
+    "typer>=0.26.8",
+]
+
+[project.scripts]
+mudpeter = "mudpeter.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ptpython>=3.0.32",
+]
