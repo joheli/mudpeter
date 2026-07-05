@@ -2,6 +2,7 @@ from datetime import datetime, UTC
 from typing import Annotated
 from sqlmodel import SQLModel, Field, Column
 from sqlalchemy.types import JSON, Text
+from mudpeter.config import AppConfig
 
 class Publication(SQLModel, table=True):
     """
@@ -18,6 +19,9 @@ class Publication(SQLModel, table=True):
     pmid: Annotated[str, Field(primary_key=True)] # primary key!
     pmcid: Annotated[str | None, Field(default=None, index=True)]
     doi: Annotated[str | None, Field(default=None, index=True)]
+    
+    # keyword, optionally used for grouping of entries
+    keyword: Annotated[str, Field(default=None, index=True)]
 
     # bibliographic metadata
     title: Annotated[str | None, Field(default=None)]
@@ -35,7 +39,7 @@ class Publication(SQLModel, table=True):
     created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(tz = UTC))]
     updated_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(tz = UTC), sa_column_kwargs={"onupdate": lambda: datetime.now(tz=UTC)})]
 
-def publication_from_pubmed_dict(d: dict[str, str]) -> Publication | None:
+def publication_from_pubmed_dict(d: dict[str, str], config: AppConfig) -> Publication | None:
     """
     Map a dict produced by mudpeter.pubmed.articles.fetch_article_infos into a Publication model.
     If pubmed id ("PMID") should be None or empty (falsy), None is returned.
@@ -47,11 +51,15 @@ def publication_from_pubmed_dict(d: dict[str, str]) -> Publication | None:
         
     if not d.get("PMID"):
         return 
+    
+    # keyword is gathered from config
+    kw = config.pubmed.keyword
 
     return Publication(
         pmid=str(d.get("PMID")).strip(), 
         pmcid=pmcid,
         doi=(str(d.get("DOI")).strip() if d.get("DOI") else None),
+        keyword=kw,
         title=(str(d.get("Title")).strip() if d.get("Title") else None),
         abstract=(str(d.get("Abstract")).strip() if d.get("Abstract") else None),
         journal=(str(d.get("Journal")).strip() if d.get("Journal") else None),

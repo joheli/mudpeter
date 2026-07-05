@@ -9,6 +9,8 @@ from mudpeter.config import AppConfig
 from mudpeter.pipeline import fetch_publications_from_pubmed, enrich_publications_with_fulltext
 from mudpeter.db import make_sqlite_url, get_engine, init_db as _init_db, upsert_publications
 
+from mudpeter.utils.export import export_fulltexts
+
 console = Console()
 
 app = typer.Typer(
@@ -33,7 +35,7 @@ def _render_summary(n_total: int, n_with_fulltext: int) -> None:
 @app.command("run")
 def run(
     config: Annotated[Path, typer.Option("--config", "-c", exists=True, dir_okay=False, readable=True, help="Path to TOML config file")],
-    init_db: Annotated[bool, typer.Option("--init-db/--no-init-db", help="Create tables if needed")] = True,
+    init_db: Annotated[bool, typer.Option("--init-db/--no-init-db", help="Create tables if needed")] = True, # this is probably not necessary for sqlite!
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch/enrich but do not write to database")] = False,
 ) -> None:
     """
@@ -45,7 +47,7 @@ def run(
         console.print(f"[red]Config error:[/red] {e}")
         raise typer.Exit(code=2)
 
-    db_url = cfg.database.url or make_sqlite_url(cfg.database.sqlite_path)  # type: ignore[arg-type]
+    db_url = make_sqlite_url(cfg.database.sqlite_path)  # type: ignore[arg-type]
     engine = get_engine(db_url, echo=cfg.database.echo)
 
     if init_db and not dry_run:
@@ -64,6 +66,7 @@ def run(
             email=cfg.pubmed.email,
             retmax=cfg.pubmed.retmax,
             batch_size=cfg.pubmed.batch_size,
+            config=cfg # cfg is passed on to extract the optional keyword
         )
         progress.update(t_fetch, completed=1, total=1)
 
@@ -106,6 +109,24 @@ def validate_config(config: Annotated[Path, typer.Argument(exists=True, dir_okay
         raise typer.Exit(code=2)
     console.print(cfg.model_dump())
 
+@app.command("export")
+def export(config: Annotated[Path, typer.Option("--config", "-c", exists=True, dir_okay=False, readable=True, help="Path to TOML config file")],
+           export_directory: Annotated[Path, typer.Option("--export_directory", "-e", dir_okay=True, file_okay=False, help="Path to export directory")],
+           keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Filter by keyword")] = None):
+    try:
+        cfg = AppConfig.from_toml(config)
+    except Exception as e:
+        console.print(f"[red]Config error:[/red] {e}")
+        raise typer.Exit(code=2)
 
+    db_url = make_sqlite_url(cfg.database.sqlite_path)  # type: ignore[arg-type]
+    engine = get_engine(db_url, echo=cfg.database.echo)
+    
+    try:
+        export_fulltexts(export_directory, engine, keyword)
+    except Exception as e:
+        console.print(f"[red]Export error:[/red] {e}")
+        raise typer.Exit(code=2)
+    
 def main() -> None:
     app()

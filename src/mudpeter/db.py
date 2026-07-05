@@ -78,6 +78,7 @@ def upsert_publications(engine, publications: Iterable[Publication]) -> int:
             if existing:
                 existing.pmcid = pub.pmcid or existing.pmcid # resorts to existing.pmcid if pub.pmcid is "falsy", i.e. None, "", 0, False, empty [] etc.
                 existing.doi = pub.doi or existing.doi
+                existing.keyword = pub.keyword or existing.keyword
                 existing.title = pub.title or existing.title
                 existing.abstract = pub.abstract or existing.abstract
                 existing.journal = pub.journal or existing.journal
@@ -93,7 +94,33 @@ def upsert_publications(engine, publications: Iterable[Publication]) -> int:
             processed += 1
     return processed
 
+def extract_keywords_and_fulltexts(engine, *, keyword: str = None) -> list[tuple[str, str, str]]:
+    """ 
+    This function extracts keyword, Pubmed ID (pmid), and fulltext and puts it into a  
+    `list[tuple[str, str, str]]` in memory.
+    
+    Argument `keyword`, if given (it is optional), filters by keyword.
+    """
+    with session_scope(engine) as session: 
+        query = select(Publication.keyword, Publication.pmid, Publication.full_text).where(Publication.full_text.is_not(None))
+        if keyword:
+            query = query.where(Publication.keyword == keyword)
+        fulltexts = session.exec(query).all()
+    return fulltexts
+    
+
 # not sure if this def is needed:
 def get_publication_by_pmid(engine, pmid: str) -> None | Publication: # DELETE mark for possible deletion
     with session_scope(engine) as session:
         return session.exec(select(Publication).where(Publication.pmid == pmid)).first()
+    
+if __name__ == "__main__":
+    e = get_engine(make_sqlite_url("mudpeter1.db"))
+    ft = extract_keywords_and_fulltexts(e, keyword="ungrouped")
+    print(f"""
+The query returned {len(ft)} entries.
+
+The first entry:
+
+{ft[0]}
+          """)

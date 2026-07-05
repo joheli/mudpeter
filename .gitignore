@@ -7,5 +7,11 @@ wheels/
 *.egg-info
 *.db
 
+# experiments
+experiments/
+
 # Virtual environments
 .venv
+
+# gitignore
+.gitignore

@@ -7,21 +7,14 @@ from pydantic import BaseModel, Field, model_validator
 class PubMedConfig(BaseModel):
     term: Annotated[str, Field(description="PubMed search term/query")] # setting no default means: this field is mandatory
     email: Annotated[str, Field(description="Email for NCBI Entrez usage")]
+    keyword: Annotated[str, Field(default="ungrouped", description="Database field allowing grouping/categorization of returned articles")]
     retmax: Annotated[int, Field(default=100, ge=1, le=100000)]
     batch_size: Annotated[int, Field(default=50, ge=1, le=1000)]
 
 
 class DatabaseConfig(BaseModel):
     sqlite_path: Annotated[str | None, Field(default=None, description="Path to SQLite file")]
-    url: Annotated[str | None, Field(default=None, description="SQLAlchemy database URL/connection string")] # DELETE this field should be deleted!
     echo: bool = False
-
-    @model_validator(mode="after") # this is not necessary, once `url` has been removed
-    def _one_of(self):
-        if not self.sqlite_path and not self.url:
-            raise ValueError("database.sqlite_path or database.url must be provided")
-        return self
-
 
 class FullTextConfig(BaseModel):
     enabled: bool = True

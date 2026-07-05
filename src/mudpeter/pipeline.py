@@ -4,8 +4,11 @@ from mudpeter.pubmed.articles import search_pubmed, fetch_article_infos
 from mudpeter.models import Publication, publication_from_pubmed_dict
 from mudpeter.fulltext.retrieve import try_fulltext_from_pmc, try_fulltext_from_unpaywall_pdf
 
+from mudpeter.config import AppConfig
 
-def fetch_publications_from_pubmed(*, term: str, email: str, retmax: int, batch_size: int) -> list[Publication]:
+
+def fetch_publications_from_pubmed(*, term: str, email: str, retmax: int, batch_size: int,
+                                   config: AppConfig) -> list[Publication]:
     """ 
     `fetch_publications_from_pubmed` is a wrapper for `fetch_article_infos`.
     It adds argument `batch_size` which allows the retrieval to take place in batches.
@@ -25,7 +28,7 @@ def fetch_publications_from_pubmed(*, term: str, email: str, retmax: int, batch_
         )
         for d in batch:
             # Check if Publication is returned at all - this is not the case if pmid is None! See `publication_from_pubmed`
-            d_pub = publication_from_pubmed_dict(d)
+            d_pub = publication_from_pubmed_dict(d, config) # config is passed on to extract the optional keyword from config - this is necessary to enable later grouping
             if d_pub:
                 pubs.append(d_pub)
         retstart += batch_size
