@@ -132,5 +132,7 @@ def export(config: Annotated[Path, typer.Option("--config", "-c", exists=True, d
         console.print(f"[red]Export error:[/red] {e}")
         raise typer.Exit(code=2)
     
+    # TODO: Add an option to export a csv file that can be fed into oneshot!
+    
 def main() -> None:
     app()

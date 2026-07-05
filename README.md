@@ -267,3 +267,17 @@ For command-specific help, run for example:
 mudpeter run --help
 mudpeter export --help
 ```
+
+## ToDos
+
+I am working on the following additions - so do hang on to your hats:
+
+### High priority
+
+- [ ] Add option to export a csv file to be batch-processed by [oneshot](https://github.com/joheli/oneshot) - this would facilitate automated analysis by LLMs 
+- [ ] Limit calls to Pubmed and BioC API 
+- [ ] Add option to manually add pdfs that can be extracted and added to the full-texts
+
+### Medium priority
+
+- [ ] Allow documents to be parsed by [docling-serve](https://github.com/docling-project/docling-serve) in addition to [pymupdf](https://github.com/pymupdf/pymupdf)
