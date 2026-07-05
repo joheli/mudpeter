@@ -113,6 +113,10 @@ def validate_config(config: Annotated[Path, typer.Argument(exists=True, dir_okay
 def export(config: Annotated[Path, typer.Option("--config", "-c", exists=True, dir_okay=False, readable=True, help="Path to TOML config file")],
            export_directory: Annotated[Path, typer.Option("--export_directory", "-e", dir_okay=True, file_okay=False, help="Path to export directory")],
            keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Filter by keyword")] = None):
+    """ 
+    Export full-texts as text files from the database to a given root directory.
+    If provided, only full text corresponding to a keyword are exported.
+    """
     try:
         cfg = AppConfig.from_toml(config)
     except Exception as e:

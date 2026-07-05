@@ -1,6 +1,6 @@
 [project]
 name = "mudpeter"
-version = "0.0.2"
+version = "0.0.3"
 description = "mudpeter downloads pubmed article information and persists them locally."
 readme = "README.md"
 requires-python = ">=3.13"
