@@ -1,14 +1,16 @@
 [project]
 name = "mudpeter"
-version = "0.0.6"
-description = "mudpeter downloads pubmed article information and persists them locally."
+version = "0.0.7"
+description = "mudpeter downloads pubmed articles and persists them locally."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "biopython>=1.87",
+    "jinja2>=3.1.6",
     "pandas>=3.0.3",
     "pydantic>=2.13.4",
     "pymupdf>=1.28.0",
+    "pytest>=9.1.1",
     "requests>=2.34.2",
     "sqlmodel>=0.0.39",
     "typer>=0.26.8",
@@ -25,4 +27,5 @@ build-backend = "uv_build"
 dev = [
     "datasette>=0.65.2",
     "ptpython>=3.0.32",
+    "ruff>=0.15.20",
 ]

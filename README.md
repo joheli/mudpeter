@@ -280,7 +280,7 @@ I am working on the following additions - so do hang on to your hats:
 ### High priority
 
 - [x] ~~Add option to export a csv file to be batch-processed by [oneshot](https://github.com/joheli/oneshot) - this would facilitate automated analysis by LLMs~~ _Done (Version 0.0.6)! See `mudpeter export --help`_.
-- [ ] Allow keyword-specific instructions and questions for _oneshot_
+- [x] ~~Allow keyword-specific instructions and questions for _oneshot_~~ _Done (Version 0.0.7)_
 - [ ] Limit calls to Pubmed and BioC API 
 - [ ] Add option to manually add pdfs that can be extracted and added to the full-texts
 
