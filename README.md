@@ -225,6 +225,11 @@ mudpeter stores records in a local SQLite database. SQLite is useful here becaus
 
 The main table is `publications`. It stores identifiers, bibliographic metadata, the local keyword, the PDF URL when found, the extracted full text when available, and bookkeeping timestamps.
 
+> [!TIP]
+> I use [Datasette](https://datasette.io/) to explore the contents of sqlite databases.
+> After installing with `pip install datasette` view the database with `datasette serve mydatabase.db`
+> on `http://localhost:8001`.
+
 When writing records, mudpeter performs an upsert by PMID:
 
 - if the PMID is not already present, it inserts a new row;
@@ -274,7 +279,8 @@ I am working on the following additions - so do hang on to your hats:
 
 ### High priority
 
-- [ ] Add option to export a csv file to be batch-processed by [oneshot](https://github.com/joheli/oneshot) - this would facilitate automated analysis by LLMs 
+- [x] ~~Add option to export a csv file to be batch-processed by [oneshot](https://github.com/joheli/oneshot) - this would facilitate automated analysis by LLMs~~ _Done (Version 0.0.6)! See `mudpeter export --help`_.
+- [ ] Allow keyword-specific instructions and questions for _oneshot_
 - [ ] Limit calls to Pubmed and BioC API 
 - [ ] Add option to manually add pdfs that can be extracted and added to the full-texts
 

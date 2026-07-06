@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime, UTC
+from datetime import date, datetime, UTC
 from typing import Iterable
 from sqlmodel import SQLModel, Session, create_engine, select
 from pathlib import Path
@@ -94,18 +94,40 @@ def upsert_publications(engine, publications: Iterable[Publication]) -> int:
             processed += 1
     return processed
 
-def extract_keywords_and_fulltexts(engine, *, keyword: str = None) -> list[tuple[str, str, str]]:
-    """ 
-    This function extracts keyword, Pubmed ID (pmid), and fulltext and puts it into a  
-    `list[tuple[str, str, str]]` in memory.
-    
-    Argument `keyword`, if given (it is optional), filters by keyword.
+from datetime import date, datetime
+
+def extract_keywords_and_fulltexts(
+    engine,
+    *,
+    keyword: str | None = None,
+    beforedate: date | datetime | None = None,
+    afterdate: date | datetime | None = None,
+) -> list[tuple[str, str, str]]:
     """
-    with session_scope(engine) as session: 
-        query = select(Publication.keyword, Publication.pmid, Publication.full_text).where(Publication.full_text.is_not(None))
-        if keyword:
+    Extract keyword, PubMed ID (pmid), and fulltext into memory.
+
+    Optional filters:
+    - keyword: exact match on Publication.keyword
+    - beforedate: Publication.updated_at <= beforedate
+    - afterdate: Publication.updated_at >= afterdate
+    """
+    with session_scope(engine) as session:
+        query = (
+            select(Publication.keyword, Publication.pmid, Publication.full_text)
+            .where(Publication.full_text.is_not(None))
+        )
+
+        if keyword is not None:
             query = query.where(Publication.keyword == keyword)
+
+        if afterdate is not None:
+            query = query.where(Publication.updated_at >= afterdate)
+
+        if beforedate is not None:
+            query = query.where(Publication.updated_at <= beforedate)
+
         fulltexts = session.exec(query).all()
+
     return fulltexts
     
 

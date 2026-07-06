@@ -9,7 +9,8 @@ from mudpeter.config import AppConfig
 from mudpeter.pipeline import fetch_publications_from_pubmed, enrich_publications_with_fulltext
 from mudpeter.db import make_sqlite_url, get_engine, init_db as _init_db, upsert_publications
 
-from mudpeter.utils.export import export_fulltexts
+from mudpeter.utils.export import export_fulltexts, create_oneshot_csv
+from mudpeter.utils.utils import parse_date_or_datetime
 
 console = Console()
 
@@ -112,7 +113,13 @@ def validate_config(config: Annotated[Path, typer.Argument(exists=True, dir_okay
 @app.command("export")
 def export(config: Annotated[Path, typer.Option("--config", "-c", exists=True, dir_okay=False, readable=True, help="Path to TOML config file")],
            export_directory: Annotated[Path, typer.Option("--export_directory", "-e", dir_okay=True, file_okay=False, help="Path to export directory")],
-           keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Filter by keyword")] = None):
+           keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Filter by keyword")] = None,
+           afterdate: Annotated[str, typer.Option("--afterdate", "-a", help="Only select full-texts updated after the given date or timepoint. Only formats `%Y-%m-%d` or `%Y-%m-%d %H:%M:%S` are accepted.")] = None,
+           beforedate: Annotated[str, typer.Option("--beforedate", "-b", help="Only select full-texts updated before the given date or timepoint. Only formats `%Y-%m-%d` or `%Y-%m-%d %H:%M:%S` are accepted.")] = None,
+           oneshot: Annotated[bool, typer.Option("--oneshot/--no-oneshot", "-o/-O", help="Create csv file for oneshot batch-text query.")] = False,
+           csv_sep: Annotated[str, typer.Option("--csv_sep", "-s", help="Separator for oneshot-csv-file.")] = ";",
+           instructions: Annotated[Path | None, typer.Option("--instructions", "-i", exists=True, dir_okay=False, readable=True, help="Path to instructions file (for oneshot call).")] = None,
+           question: Annotated[Path | None, typer.Option("--question", "-q", exists=True, dir_okay=False, readable=True, help="Path to question file (for oneshot call).")] = None):
     """ 
     Export full-texts as text files from the database to a given root directory.
     If provided, only full text corresponding to a keyword are exported.
@@ -126,13 +133,36 @@ def export(config: Annotated[Path, typer.Option("--config", "-c", exists=True, d
     db_url = make_sqlite_url(cfg.database.sqlite_path)  # type: ignore[arg-type]
     engine = get_engine(db_url, echo=cfg.database.echo)
     
+    ad = None
+    bd = None
+    
+    if afterdate:
+        ad = parse_date_or_datetime(afterdate)
+        if not ad:
+            console.print(f"[yellow]String {afterdate} could not be converted to date or datetime. Ignored.[/yellow]")
+    
+    if beforedate:
+        bd = parse_date_or_datetime(beforedate)
+        if not bd:
+            console.print(f"[yellow]String {beforedate} could not be converted to date or datetime. Ignored.[/yellow]")
+            
+    if oneshot:
+        if not instructions:
+            console.print("[red]Instructions file for oneshot not provided.[/red]")
+            raise typer.Exit(code=2)
+        if not question:
+            console.print("[red]Question file for oneshot not provided.[/red]")
+            raise typer.Exit(code=2)
+    
     try:
-        export_fulltexts(export_directory, engine, keyword)
+        fulltext_files = export_fulltexts(export_directory, engine, keyword=keyword, beforedate=bd, afterdate=ad)
+        console.print(f"[green]Full texts were successfully exported into directory {export_directory}.[/green]")
+        if oneshot:
+            create_oneshot_csv(export_directory, contexts=fulltext_files, question=question, instructions=instructions, sep=csv_sep)
+            console.print(f"[green]Oneshot csv file was placed into {export_directory}.[/green]")
     except Exception as e:
         console.print(f"[red]Export error:[/red] {e}")
         raise typer.Exit(code=2)
-    
-    # TODO: Add an option to export a csv file that can be fed into oneshot!
     
 def main() -> None:
     app()
